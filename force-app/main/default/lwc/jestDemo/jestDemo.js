@@ -1,39 +1,42 @@
-import { LightningElement, wire } from 'lwc';
-import getAccounts from '@salesforce/apex/JestDemoController.getAccounts';
-import getCases from '@salesforce/apex/JestDemoController.getCases';
-import {CurrentPageReference} from 'lightning/navigation';
+import { LightningElement, wire } from "lwc";
+import getAccounts from "@salesforce/apex/JestDemoController.getAccounts";
+import getCases from "@salesforce/apex/JestDemoController.getCases";
+import { CurrentPageReference } from "lightning/navigation";
 
 export default class JestDemo extends LightningElement {
+  @wire(CurrentPageReference)
+  currPage;
 
-    @wire(CurrentPageReference)
-    currPage;
+  @wire(getAccounts)
+  accounts;
 
-    @wire(getAccounts)
-    accounts;
+  cases;
+  error;
 
-    cases;
-    error;
+  tacoStuff = "Tacos are exciting";
+  showNewParagraph = false;
+  tacoList = [
+    { Id: 1, TacoType: "Chalupa" },
+    { Id: 2, TacoType: "Soft Shell" },
+    { Id: 3, TacoType: "Hard Shell" }
+  ];
 
-    tacoStuff = 'Tacos are exciting';
-    showNewParagraph = false;
-    tacoList = [{Id:1, TacoType: "Chalupa"}, 
-    {Id:2, TacoType: "Soft Shell"}, 
-    {Id:3, TacoType:"Hard Shell"}];
+  connectedCallback() {
+    this.getCaseData();
+  }
 
-    connectedCallback(){
-        this.getCaseData();
-    }
+  getCaseData() {
+    debugger;
+    getCases()
+      .then((response) => {
+        this.cases = response;
+      })
+      .catch((error) => {
+        this.error = error;
+      });
+  }
 
-    getCaseData(){
-      debugger;
-        getCases().then(response=>{
-            this.cases = response
-        }).catch(error=>{
-            this.error = error
-        })
-    }
-
-    renderNewParagraph(){
-        this.showNewParagraph = true;
-    }
+  renderNewParagraph() {
+    this.showNewParagraph = true;
+  }
 }
