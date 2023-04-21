@@ -30,7 +30,9 @@ jobs:
 
       - name: Install Salesforce CLI
         run: |
-          wget https://developer.salesforce.com/media/salesforce-cli/sfdx/channels/stable/sfdx-linux-amd64.tar.xz
+          sudo apt-get update
+          sudo apt-get install -y curl sudo
+          curl -sL https://install.salesforce.com/products/platform/sfdx-linux-amd64 -o sfdx-linux-amd64.tar.xz
           mkdir sfdx
           tar xJf sfdx-linux-amd64.tar.xz -C sfdx --strip-components 1
           sudo ./sfdx/install
@@ -55,10 +57,10 @@ jobs:
           echo ${{ steps.sfdc_auth.outputs.access_token }}
 
       - name: Deploy to Salesforce
-        run: sfdx force:source:deploy -x manifest/package.xml
+        run: sfdx force:source:deploy -x manifest/package.xml --verbose
 
       - name: Run Apex tests
-        run: sfdx force:apex:test:run --resultformat junit --outputdir test-results/apex --codecoverage
+        run: sfdx force:apex:test:run --resultformat junit --outputdir test-results/apex --codecoverage --verbose
 
       - name: Install LWC dependencies
         run: |
