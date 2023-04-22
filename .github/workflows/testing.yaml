@@ -5,69 +5,36 @@ on: [pull_request]
 jobs:
   run-tests:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [14.x]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
+      - name: 'Restore node_modules cache'
+        id: cache-npm
+        uses: actions/cache@v3
         with:
-          node-version: ${{ matrix.node-version}}
+          path: node_modules
+          key: npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            npm-${{ env.cache-name }}-
+            npm-
 
-      - name: Auth Salesforce
-        uses: karamchandanid/sfdc-credentials-auth@v2
-        id: sfdc_auth
-        with:
-          sfdc_client_id: ${{ secrets.SFDC_CLIENT_ID }}
-          sfdc_client_secret: ${{ secrets.SFDC_CLIENT_SECRET }}
-          user_name: ${{ secrets.SFDC_DEV_USERNAME }}
-          password: ${{ secrets.SFDC_DEV_PASSWORD }}
-          login_url: https://login.salesforce.com
+      - name: 'Install npm dependencies'
+        if: steps.cache-npm.outputs.cache-hit != 'true'
+        run: npm ci
 
-      - name: Install Salesforce CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y curl sudo
-          curl -sL https://install.salesforce.com/products/platform/sfdx-linux-amd64 -o sfdx-linux-amd64.tar.xz
-          mkdir sfdx
-          tar xJf sfdx-linux-amd64.tar.xz -C sfdx --strip-components 1
-          sudo ./sfdx/install
-          rm -rf sfdx
-          sfdx --version
-
-      - name: sfdc_auth_details
-        run: |
-          # Validating access_token if null then terminate the process
-          if [[ -z ${{ steps.sfdc_auth.outputs.access_token }} ]] || [[ ${{ steps.sfdc_auth.outputs.access_token }} == "null" ]];
-          then 
-            echo "----------------------------------"
-            echo "Error in salesforce authentication"
-            echo "----------------------------------"
-            echo "$error ${{ steps.sfdc_auth.outputs.error }} : ${{ steps.sfdc_auth.outputs.error_description }}"
-            echo ""
-            exit 1;
-          fi
-          # on success proceed following
-          echo ${{ steps.sfdc_auth.outputs.instance_url }}
-          echo ${{ steps.sfdc_auth.outputs.id }}
-          echo ${{ steps.sfdc_auth.outputs.access_token }}
-
-      - name: Deploy to Salesforce
-        run: sfdx force:source:deploy -x manifest/package.xml --verbose
+      - name: 'Code formatting verification with Prettier'
+        run: npm run prettier:verify
 
       - name: Run Apex tests
-        run: sfdx force:apex:test:run --resultformat junit --outputdir test-results/apex --codecoverage --verbose
+        run: sfdx force:apex:test:run --resultformat junit --outputdir test-results/apex --codecoverage
 
-      - name: Install LWC dependencies
-        run: |
-          cd lwc
-          npm ci
+      - name: 'Unit test Lightning Web Components'
+        run: npm run test:unit:coverage
 
-      - name: Run LWC Jest tests
+      - name: 'Install Salesforce CLI'
         run: |
-          cd lwc
-          npm test
+          npm install sfdx-cli --location=global
+          nodeInstallPath=$(npm config get prefix)
+          echo "$nodeInstallPath/bin" >> $GITHUB_PATH
+          sfdx --version
