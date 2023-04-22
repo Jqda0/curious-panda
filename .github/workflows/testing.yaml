@@ -61,7 +61,7 @@ jobs:
         run: npm run prettier
         
       - name: Run Apex tests
-        run: sfdx force:apex:test:run --testlevel RunLocalTests --resultformat junit --outputdir test-results/apex --codecoverage
-
+        run: sf apex run test --test-level RunLocalTests --result-format junit --output-dir test-results/apex --code-coverage -o ${{ steps.sfdc_auth.outputs.access_token }}
+        
       - name: 'Unit test Lightning Web Components'
         run: npm run test:unit:coverage
