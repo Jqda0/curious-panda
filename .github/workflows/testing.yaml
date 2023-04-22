@@ -1,0 +1,47 @@
+name: Run Salesforce Tests
+
+on: [pull_request]
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+       # Install Volta to enforce proper node and package manager versions
+      - name: 'Install Volta'
+        uses: volta-cli/action@v4
+
+      - name: 'Restore node_modules cache'
+        id: cache-npm
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            npm-${{ env.cache-name }}-
+            npm-
+
+      - name: 'Install npm dependencies'
+        if: steps.cache-npm.outputs.cache-hit != 'true'
+        run: npm ci
+        
+      - name: 'Install Salesforce CLI'
+        run: |
+          npm install sfdx-cli --location=global
+          nodeInstallPath=$(npm config get prefix)
+          echo "$nodeInstallPath/bin" >> $GITHUB_PATH
+          sfdx --version
+
+      - name: 'Code formatting verification with Prettier'
+        run: npm run prettier
+
+      - name: 'Unit test Lightning Web Components'
+        run: npm run test:unit:coverage
+      
+         # Upload code coverage data
+      - name: 'Upload code coverage for LWC to Codecov.io'
+        uses: codecov/codecov-action@v3
+        with:
+            flags: LWC
