@@ -30,6 +30,33 @@ jobs:
           echo "$nodeInstallPath/bin" >> $GITHUB_PATH
           sfdx --version
 
+      - name: 'SFDX Authentication'
+        uses: karamchandanid/sfdc-credentials-auth@v2
+        id: sfdc_auth
+        with:
+          sfdc_client_id: ${{ secrets.SFDC_CLIENT_ID }}
+          sfdc_client_secret: ${{ secrets.SFDC_CLIENT_SECRET }}
+          user_name: ${{ secrets.SFDC_DEV_USERNAME }}
+          password: ${{ secrets.SFDC_DEV_PASSWORD }}
+          login_url: https://login.salesforce.com
+          
+      - name: sfdc_auth_details
+        run: |
+          # Validating access_token if null then terminate the process
+          if [[ -z ${{ steps.sfdc_auth.outputs.access_token }} ]] || [[ ${{ steps.sfdc_auth.outputs.access_token }} == "null" ]];
+          then 
+            echo "----------------------------------"
+            echo "Error in salesforce authentication"
+            echo "----------------------------------"
+            echo "$error ${{ steps.sfdc_auth.outputs.error }} : ${{ steps.sfdc_auth.outputs.error_description }}"
+            echo ""
+            exit 1;
+          fi
+          # on success proceed following
+          echo ${{ steps.sfdc_auth.outputs.instance_url }}
+          echo ${{ steps.sfdc_auth.outputs.id }}
+          echo ${{ steps.sfdc_auth.outputs.access_token }}
+
       - name: 'Code formatting verification with Prettier'
         run: npm run prettier
         
