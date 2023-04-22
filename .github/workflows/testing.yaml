@@ -30,38 +30,20 @@ jobs:
           echo "$nodeInstallPath/bin" >> $GITHUB_PATH
           sfdx --version
 
-      - name: 'SFDX Authentication'
-        uses: karamchandanid/sfdc-credentials-auth@v2
-        id: sfdc_auth
+      - name: Authenticate with Salesforce CLI
+        uses: forcivity/sfdx-cli-login@v1
         with:
-          sfdc_client_id: ${{ secrets.SFDC_CLIENT_ID }}
-          sfdc_client_secret: ${{ secrets.SFDC_CLIENT_SECRET }}
-          user_name: ${{ secrets.SFDC_DEV_USERNAME }}
-          password: ${{ secrets.SFDC_DEV_PASSWORD }}
-          login_url: https://login.salesforce.com
-          
-      - name: sfdc_auth_details
-        run: |
-          # Validating access_token if null then terminate the process
-          if [[ -z ${{ steps.sfdc_auth.outputs.access_token }} ]] || [[ ${{ steps.sfdc_auth.outputs.access_token }} == "null" ]];
-          then 
-            echo "----------------------------------"
-            echo "Error in salesforce authentication"
-            echo "----------------------------------"
-            echo "$error ${{ steps.sfdc_auth.outputs.error }} : ${{ steps.sfdc_auth.outputs.error_description }}"
-            echo ""
-            exit 1;
-          fi
-          # on success proceed following
-          echo ${{ steps.sfdc_auth.outputs.instance_url }}
-          echo ${{ steps.sfdc_auth.outputs.id }}
-          echo ${{ steps.sfdc_auth.outputs.access_token }}
+          client-id: ${{ secrets.SF_CONSUMER_KEY }}
+          client-secret: ${{ secrets.SF_CONSUMER_SECRET }}
+          username: ${{ secrets.SF_USERNAME }}
+          password: ${{ secrets.SF_PASSWORD }}
+          instance-url: https://login.salesforce.com
 
       - name: 'Code formatting verification with Prettier'
         run: npm run prettier
         
       - name: Run Apex tests
-        run: sf apex run test --test-level RunLocalTests --result-format junit --output-dir test-results/apex --code-coverage -o ${{ steps.sfdc_auth.outputs.access_token }}
-        
+        run: sfdx force:apex:test:run --testlevel RunLocalTests --resultformat junit --outputdir test-results/apex --codecoverage
+
       - name: 'Unit test Lightning Web Components'
         run: npm run test:unit:coverage
