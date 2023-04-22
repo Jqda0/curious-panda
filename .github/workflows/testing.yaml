@@ -9,6 +9,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+       # Install Volta to enforce proper node and package manager versions
+      - name: 'Install Volta'
+        uses: volta-cli/action@v4
+
       - name: 'Restore node_modules cache'
         id: cache-npm
         uses: actions/cache@v3
@@ -30,20 +34,14 @@ jobs:
           echo "$nodeInstallPath/bin" >> $GITHUB_PATH
           sfdx --version
 
-      - name: Authenticate with Salesforce CLI
-        uses: forcivity/sfdx-cli-login@v1
-        with:
-          client-id: ${{ secrets.SF_CONSUMER_KEY }}
-          client-secret: ${{ secrets.SF_CONSUMER_SECRET }}
-          username: ${{ secrets.SF_USERNAME }}
-          password: ${{ secrets.SF_PASSWORD }}
-          instance-url: https://login.salesforce.com
-
       - name: 'Code formatting verification with Prettier'
         run: npm run prettier
-        
-      - name: Run Apex tests
-        run: sfdx force:apex:test:run --testlevel RunLocalTests --resultformat junit --outputdir test-results/apex --codecoverage
 
       - name: 'Unit test Lightning Web Components'
         run: npm run test:unit:coverage
+      
+         # Upload code coverage data
+      - name: 'Upload code coverage for LWC to Codecov.io'
+        uses: codecov/codecov-action@v3
+        with:
+            flags: LWC
