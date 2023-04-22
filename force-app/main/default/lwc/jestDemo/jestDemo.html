@@ -1,3 +1,5 @@
 <template>
-    
+  <template for:each={accounts.data} for:item="accountItem">
+    <div key={accountItem.Id} class="acctInfo">{accountItem.Name}</div>
+  </template>
 </template>
