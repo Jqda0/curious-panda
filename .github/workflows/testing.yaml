@@ -32,9 +32,9 @@ jobs:
 
       - name: 'Code formatting verification with Prettier'
         run: npm run prettier
-
+        
       - name: Run Apex tests
-        run: sf run test apex --testlevel RunLocalTests --resultformat junit --outputdir test-results/apex --codecoverage
+        run: sfdx force:apex:test:run --testlevel RunLocalTests --resultformat junit --outputdir test-results/apex --codecoverage
 
       - name: 'Unit test Lightning Web Components'
         run: npm run test:unit:coverage
