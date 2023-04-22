@@ -1,6 +1,6 @@
 import { createElement } from "lwc";
-import jestDemoComponent from "c/JestDemo";
-import {setImmediate} from 'timers';
+import jestDemoComponent from "c/jestDemo";
+import { setImmediate } from "timers";
 import getAccounts from "@salesforce/apex/JestDemoController.getAccounts";
 
 const mockAccounts = require("./mockData/accounts.json");
