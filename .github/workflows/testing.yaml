@@ -22,6 +22,13 @@ jobs:
       - name: 'Install npm dependencies'
         if: steps.cache-npm.outputs.cache-hit != 'true'
         run: npm ci
+        
+      - name: 'Install Salesforce CLI'
+        run: |
+          npm install sfdx-cli --location=global
+          nodeInstallPath=$(npm config get prefix)
+          echo "$nodeInstallPath/bin" >> $GITHUB_PATH
+          sfdx --version
 
       - name: 'Code formatting verification with Prettier'
         run: npm run prettier
@@ -31,10 +38,3 @@ jobs:
 
       - name: 'Unit test Lightning Web Components'
         run: npm run test:unit:coverage
-
-      - name: 'Install Salesforce CLI'
-        run: |
-          npm install sfdx-cli --location=global
-          nodeInstallPath=$(npm config get prefix)
-          echo "$nodeInstallPath/bin" >> $GITHUB_PATH
-          sfdx --version
